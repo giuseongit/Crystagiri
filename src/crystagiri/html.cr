@@ -50,9 +50,9 @@ module Crystagiri
     def initialize(@content : String)
       @nodes = XML.parse_html @content
 
-      @ids = Hash(String, XML::Node).new
-      @tags = Hash(String, Array(XML::Node)).new
-      @classes = Hash(String, Array(XML::Node)).new
+      @ids = Hash(String, Crystagiri::Tag).new
+      @tags = Hash(String, Array(Crystagiri::Tag)).new
+      @classes = Hash(String, Array(Crystagiri::Tag)).new
 
       visit @nodes  # Build internal pointer map
     end
@@ -60,21 +60,21 @@ module Crystagiri
     # Functions used to populate internal maps
 
     private def add_id(id : String, node : XML::Node)
-      @ids[id] = node
+      @ids[id] = Tag.new(node).as Crystagiri::Tag
     end
 
     private def add_node(node : XML::Node)
       if @tags[node.name]? == nil
-        @tags[node.name] = [] of XML::Node
+        @tags[node.name] = [] of Crystagiri::Tag
       end
-      @tags[node.name] << node
+      @tags[node.name] << Tag.new(node).as Crystagiri::Tag
     end
 
     private def add_class(klass : String, node : XML::Node)
       if @classes[klass]? == nil
-        @classes[klass] = [] of XML::Node
+        @classes[klass] = [] of Crystagiri::Tag
       end
-      @classes[klass] << node
+      @classes[klass] << Tag.new(node).as Crystagiri::Tag
     end
 
     # Depth-first visit. Given a node, extract metadata from
@@ -101,7 +101,7 @@ module Crystagiri
     def at_tag(tag_name : String) : Crystagiri::Tag | Nil
       if tags = @tags[tag_name]?
         tags.each do |tag|
-          return Tag.new(tag).as Crystagiri::Tag
+          return tag
         end
       end
       return nil
@@ -112,8 +112,7 @@ module Crystagiri
     def where_tag(tag_name : String, &block) : Array(Tag)
       arr = [] of Crystagiri::Tag
       if tags = @tags[tag_name]?
-        tags.each do |node|
-          tag = Tag.new(node).as Crystagiri::Tag
+        tags.each do |tag|
           yield tag
           arr << tag
         end
@@ -126,8 +125,7 @@ module Crystagiri
     def where_class(class_name : String, &block) : Array(Tag)
       arr = [] of Crystagiri::Tag
       if klasses = @classes[class_name]?
-        klasses.each do |node|
-          klass = Tag.new(node).as Crystagiri::Tag
+        klasses.each do |klass|
           yield klass
           arr << klass
         end
@@ -139,7 +137,7 @@ module Crystagiri
     # `Crystagiri::Tag` founded or a nil if not founded
     def at_id(id_name : String) : Crystagiri::Tag | Nil
       if node = @ids[id_name]?
-        return Tag.new(node).as Crystagiri::Tag
+        return node
       end
     end
 
@@ -159,6 +157,24 @@ module Crystagiri
     def at_css(query : String)
       css(query) { |tag| return tag }
       return nil
+    end
+
+    private def parse_css(selector : String)
+      if selector[0] == '.'
+        classname = selector[1..-1]
+        nodes = [] of Crystagiri::Tag
+        where_class classname do |node|
+          yield node
+          nodes << node
+        end
+        return nodes
+      end
+      if selector[0] == '#'
+        id_name = selector[1..-1]
+        node = at_id id_name
+        yield node
+        return node
+      end
     end
   end
 end
