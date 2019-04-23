@@ -159,7 +159,7 @@ module Crystagiri
       return nil
     end
 
-    private def parse_css(selector : String)
+    private def parse_css(selector : String) : Array(Tag)
       if selector[0] == '.'
         classname = selector[1..-1]
         nodes = [] of Crystagiri::Tag
@@ -173,7 +173,7 @@ module Crystagiri
         id_name = selector[1..-1]
         node = at_id id_name
         yield node
-        return node
+        return [node]
       end
     end
   end
