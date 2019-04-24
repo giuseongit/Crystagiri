@@ -160,6 +160,15 @@ module Crystagiri
     end
 
     private def parse_css(selector : String) : Array(Tag)
+      collection = [] of Crystal::Tag
+      subselectors = selector.split ','
+      subselectors.each do |subselector|
+        collection = collection.concat(parse_css subselector.strip)
+      end
+      if subselectors.size > 1
+        return collection
+      end
+
       if selector[0] == '.'
         classname = selector[1..-1]
         nodes = [] of Crystagiri::Tag
