@@ -54,7 +54,7 @@ module Crystagiri
       @tags = Hash(String, Array(Crystagiri::Tag)).new
       @classes = Hash(String, Array(Crystagiri::Tag)).new
 
-      visit @nodes  # Build internal pointer map
+      visit @nodes # Build internal pointer map
     end
 
     # Functions used to populate internal maps
@@ -82,7 +82,7 @@ module Crystagiri
     private def visit(node : XML::Node)
       # We only extract metadata from HTML nodes
       if node.element?
-        add_node node 
+        add_node node
         if to = node["id"]?
           add_id to, node
         end
@@ -91,7 +91,7 @@ module Crystagiri
         end
       end
       # visit each child
-      node.children.each do | child |
+      node.children.each do |child|
         visit child
       end
     end
@@ -162,10 +162,10 @@ module Crystagiri
     private def parse_css(selector : String) : Array(Tag)
       collection = [] of Crystal::Tag
       subselectors = selector.split ','
-      subselectors.each do |subselector|
-        collection = collection.concat(parse_css subselector.strip)
-      end
       if subselectors.size > 1
+        subselectors.each do |subselector|
+          collection = collection.concat(parse_css subselector.strip)
+        end
         return collection
       end
 
